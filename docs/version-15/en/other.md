@@ -4,3 +4,4 @@ Here you can put some explanations about your awesome feature.
 
 
 ## Subtitle for other
+Other text under subtitle
