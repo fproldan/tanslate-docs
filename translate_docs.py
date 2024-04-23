@@ -74,6 +74,7 @@ def translate_md_files():
                     f.write(translation['translatedText'])
 
                 # Commit changes to Git
+                repo = Repo(search_parent_directories=True)
                 branch_name = f'translate-{os.path.basename(md_file)}-{target_language}'
                 repo.git.checkout(base_branch)
                 repo.git.checkout('-b', branch_name)
@@ -84,6 +85,7 @@ def translate_md_files():
                 origin.push(branch_name)
 
                 # Create pull request
+                repo = g.get_repo(repo_name)
                 title = f'Translate {os.path.basename(md_file)} to {target_language}'
                 body = f'This pull request translates {os.path.basename(md_file)} to {target_language}'
                 try:
