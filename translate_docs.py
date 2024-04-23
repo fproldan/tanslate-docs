@@ -84,6 +84,7 @@ def translate_md_files():
                 origin.push(branch_name)
 
                 # Create pull request
+                repo = g.get_repo(repo_name)
                 title = f'Translate {os.path.basename(md_file)} to {target_language}'
                 body = f'This pull request translates {os.path.basename(md_file)} to {target_language}'
                 try:
