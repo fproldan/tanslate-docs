@@ -1,9 +1,11 @@
 import os
 import re
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from google.cloud import translate_v2 as translate
 from git import Repo
 from github import Github, GithubException
+
 
 
 def set_google_credentials():
@@ -18,7 +20,7 @@ def get_pull_request_number():
     match = re.match(r'refs/pull/(\d+)/merge', github_ref)
     return int(match.group(1)) if match else None
 
-def translate_md_files():
+def translate_md_files_old():
     set_google_credentials()
     translate_client = translate.Client()
     target_languages = ['es']
@@ -92,6 +94,75 @@ def translate_md_files():
                     repo.create_pull(title=title, body=body, head=branch_name, base=base_branch)
                 except GithubException as e:
                     print(f"Failed to create pull request for {md_file}: {e}")
+
+
+def translate_file(source_file, target_file, target_language, translate_client):
+    translation = translate_client.translate(source_file, target_language=target_language, format_='text')
+    with open(target_file, 'w', encoding='utf-8') as f:
+        f.write(translation['translatedText'])
+
+
+def translate_md_files():
+    set_google_credentials()
+    translate_client = translate.Client()
+    target_languages = ['es']
+
+    base_branch = os.getenv('GITHUB_BASE_REF', 'main')  # Default to 'main' if not available
+    repo_name = os.getenv('GITHUB_REPOSITORY')
+
+    g = Github(os.getenv('GITHUB_TOKEN'))
+
+    repo = Repo(search_parent_directories=True)
+    origin = repo.remote(name='origin')
+    origin.fetch()
+
+    version_folders = [f for f in os.listdir('docs') if os.path.isdir(os.path.join('docs', f))]
+
+    pull_request_number = get_pull_request_number()
+    repository = g.get_repo(repo_name, lazy=False)
+    pull_request = repository.get_pull(pull_request_number)
+    head_branch = pull_request.head.ref
+    files = pull_request.get_files()
+
+    modified_files = {file.filename: repository.get_contents(file.filename, ref=head_branch).decoded_content.decode('utf-8') for file in files}
+
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        for version in version_folders:
+            for target_language in target_languages:
+                for filename, modified_file in modified_files.items():
+                    if filename.startswith(f"docs/{version}/en") and filename.endswith('.md'):
+                        source_file = modified_file
+                        target_folder = f"docs/{version}/{target_language}"
+                        target_file = os.path.join(target_folder, os.path.basename(filename))
+                        if not os.path.exists(target_folder):
+                            os.makedirs(target_folder)
+                        futures.append(executor.submit(translate_file, source_file, target_file, target_language, translate_client))
+
+        for future in as_completed(futures):
+            try:
+                future.result()
+            except Exception as e:
+                print(f"Error during translation: {e}")
+
+    for version in version_folders:
+        for target_language in target_languages:
+            target_folder = f"docs/{version}/{target_language}"
+            branch_name = f'translate-{target_language}'
+            repo = Repo(search_parent_directories=True)
+            repo.git.checkout(base_branch)
+            repo.git.checkout('-b', branch_name)
+            repo.index.add([target_folder])
+            commit_message = f'Translate {target_language}'
+            repo.index.commit(commit_message)
+            origin.push(branch_name)
+
+            title = f'Translate to {target_language}'
+            body = f'This pull request translates to {target_language}'
+            try:
+                repo.create_pull(title=title, body=body, head=branch_name, base=base_branch)
+            except GithubException as e:
+                print(f"Failed to create pull request for {target_language}: {e}")
 
 
 if __name__ == "__main__":
