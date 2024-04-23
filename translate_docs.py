@@ -74,6 +74,7 @@ def translate_md_files():
                     f.write(translation['translatedText'])
 
                 # Commit changes to Git
+                repo = Repo(search_parent_directories=True)
                 branch_name = f'translate-{os.path.basename(md_file)}-{target_language}'
                 repo.git.checkout(base_branch)
                 repo.git.checkout('-b', branch_name)
