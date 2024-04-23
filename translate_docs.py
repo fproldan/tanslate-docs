@@ -111,6 +111,7 @@ def translate_md_files():
     repo_name = os.getenv('GITHUB_REPOSITORY')
 
     g = Github(os.getenv('GITHUB_TOKEN'))
+    repository = g.get_repo(repo_name)
 
     repo = Repo(search_parent_directories=True)
     origin = repo.remote(name='origin')
@@ -149,7 +150,6 @@ def translate_md_files():
         for target_language in target_languages:
             target_folder = f"docs/{version}/{target_language}"
             branch_name = f'translate-{target_language}'
-            repo = Repo(search_parent_directories=True)
             repo.git.checkout(base_branch)
             repo.git.checkout('-b', branch_name)
             repo.index.add([target_folder])
@@ -160,7 +160,7 @@ def translate_md_files():
             title = f'Translate to {target_language}'
             body = f'This pull request translates to {target_language}'
             try:
-                repo.create_pull(title=title, body=body, head=branch_name, base=base_branch)
+                repository.create_pull(title=title, body=body, head=branch_name, base=base_branch)
             except GithubException as e:
                 print(f"Failed to create pull request for {target_language}: {e}")
 
