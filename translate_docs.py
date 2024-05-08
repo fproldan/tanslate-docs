@@ -9,6 +9,13 @@ from git import Repo
 from github import Github, GithubException
 
 
+def get_languages():
+    app_name = pathlib.Path(__file__).resolve().parent.name
+    hooks = importlib.import_module(f'{app_name}.hooks')
+    try:
+        return hooks.docs_languages
+    except Exception:
+        return []
 
 def set_google_credentials():
     secret_value = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
@@ -30,13 +37,15 @@ def translate_file(source_file, target_file, target_language, translate_client):
 
 
 def translate_md_files():
+    target_languages = get_languages()
+
+    if not target_languages:
+        return 
+    
     set_google_credentials()
     translate_client = translate.Client()
-    target_languages = ['es']
-
     base_branch = os.getenv('GITHUB_BASE_REF', 'main')  # Default to 'main' if not available
     repo_name = os.getenv('GITHUB_REPOSITORY')
-
     g = Github(os.getenv('GITHUB_TOKEN'))
 
     repo = Repo(search_parent_directories=True)
@@ -92,7 +101,4 @@ def translate_md_files():
 
 
 if __name__ == "__main__":
-    app_name = pathlib.Path(__file__).resolve().parent.name
-    hooks = importlib.import_module(f'{app_name}.hooks')
-    print(hooks.docs_languages)
     translate_md_files()
