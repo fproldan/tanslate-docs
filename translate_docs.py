@@ -1,6 +1,8 @@
 import os
 import re
 import json
+import sys
+import importlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from google.cloud import translate_v2 as translate
 from git import Repo
@@ -90,6 +92,7 @@ def translate_md_files():
 
 
 if __name__ == "__main__":
-    import frappe
-    print(frappe.get_hooks('doctype_js'))
+    app_name = pathlib.Path(__file__).resolve().parent.name
+    hooks = importlib.import_module(f'{app_name}.hooks')
+    print(hooks.docs_languages)
     translate_md_files()
