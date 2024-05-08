@@ -1,0 +1,1 @@
+docs_languages = ['es', 'fr']
