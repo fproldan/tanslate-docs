@@ -90,4 +90,6 @@ def translate_md_files():
 
 
 if __name__ == "__main__":
+    import frappe
+    print(frappe.get_hooks('doctype_js'))
     translate_md_files()
