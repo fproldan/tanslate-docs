@@ -1,7 +1,7 @@
 import os
 import re
 import json
-import sys
+import pathlib
 import importlib
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from google.cloud import translate_v2 as translate
