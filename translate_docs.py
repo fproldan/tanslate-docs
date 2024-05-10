@@ -60,7 +60,13 @@ def translate_md_files():
     head_branch = pull_request.head.ref
     files = pull_request.get_files()
 
-    modified_files = {file.filename: repository.get_contents(file.filename, ref=head_branch).decoded_content.decode('utf-8') for file in files}
+    modified_files = {}
+
+    for file in files:
+        try:
+            modified_files[file.filename] = repository.get_contents(file.filename, ref=head_branch).decoded_content.decode('utf-8')
+        except Exception:
+            continue
 
     with ThreadPoolExecutor() as executor:
         futures = []
