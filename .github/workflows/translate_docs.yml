@@ -15,4 +15,9 @@ jobs:
       - name:  Track Overrides
         uses: diamorafaela/translate-docs@main
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKENn: ${{ secrets.GITHUB_TOKEN }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          GITHUB_REPOSITORY: ${{ secrets.GITHUB_REPOSITORY }}
+          GITHUB_BASE_REF: ${{ secrets.GITHUB_BASE_REF }}
+          GITHUB_REF: ${{ secrets.GITHUB_REF }}
+
