@@ -1,1 +1,1 @@
-docs_languages = ['es', 'fr']
+docs_languages = ['es']
